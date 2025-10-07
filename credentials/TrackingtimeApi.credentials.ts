@@ -34,8 +34,8 @@ export class TrackingtimeApi implements ICredentialType {
 	authenticate: IAuthenticateGeneric = {
 		type: 'generic',
 		properties: {
-			auth: {
-				username: '={{$credentials.email}}',
+			qs: {
+				email: '={{$credentials.email}}',
 				password: '={{$credentials.password}}',
 			},
 		},
