@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-trackingtime",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Simple, powerful time and attendance tracking API.",
   "license": "MIT",
   "homepage": "https://example.com",
@@ -33,7 +33,7 @@
       "dist/credentials/TrackingtimeApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/Trackingtime/Trackingtime.node.js"
+      "dist/nodes/Trackingtime/TrackingtimeTrigger.node.js"
     ]
   },
   "devDependencies": {

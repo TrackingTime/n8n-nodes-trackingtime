@@ -10,18 +10,11 @@ export class TrackingtimeApi implements ICredentialType {
 
 	displayName = 'Trackingtime API';
 
-	// Link to your community node's README
-	documentationUrl = 'https://developers.trackingtime.co/#intro';
+	documentationUrl = 'https://support.trackingtime.co/en/articles/6329119-apps-integrations#h_e56a576a42';
 
 	properties: INodeProperties[] = [
 		{
-			displayName: 'Email',
-			name: 'email',
-			type: 'string',
-			default: '',
-		},
-		{
-			displayName: 'Password',
+			displayName: 'App Password',
 			name: 'password',
 			type: 'string',
 			typeOptions: {
@@ -34,8 +27,8 @@ export class TrackingtimeApi implements ICredentialType {
 	authenticate: IAuthenticateGeneric = {
 		type: 'generic',
 		properties: {
-			qs: {
-				email: '={{$credentials.email}}',
+			auth: {
+				username: 'API_TOKEN',
 				password: '={{$credentials.password}}',
 			},
 		},
@@ -44,7 +37,7 @@ export class TrackingtimeApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: 'https://app.trackingtime.co/api/v4',
-			url: '/login',
-		},
+			url: '/teams',
+		}
 	};
 }
