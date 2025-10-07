@@ -1,5 +1,5 @@
 {
-  "name": "@trackingtime/n8n-nodes-trackingtime",
+  "name": "n8n-nodes-trackingtime",
   "version": "0.1.0",
   "description": "n8n community node to work with the Example API",
   "license": "MIT",
@@ -19,12 +19,8 @@
   "files": ["dist"],
   "n8n": {
     "n8nNodesApiVersion": 1,
-    "credentials": [
-      "dist/credentials/TrackingtimeTrackingtimeApi.credentials.js"
-    ],
-    "nodes": [
-      "dist/nodes/TrackingtimeTrackingtime/TrackingtimeTrackingtime.node.js"
-    ]
+    "credentials": ["dist/credentials/TrackingtimeApi.credentials.js"],
+    "nodes": ["dist/nodes/Trackingtime/Trackingtime.node.js"]
   },
   "devDependencies": {
     "@n8n/node-cli": "*",

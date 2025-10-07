@@ -5,13 +5,13 @@ import type {
 	INodeProperties,
 } from 'n8n-workflow';
 
-export class TrackingtimeTrackingtimeApi implements ICredentialType {
-	name = 'trackingtimeTrackingtimeApi';
+export class TrackingtimeApi implements ICredentialType {
+	name = 'trackingtimeApi';
 
-	displayName = 'Trackingtime Trackingtime API';
+	displayName = 'Trackingtime API';
 
 	// Link to your community node's README
-	documentationUrl = 'https://github.com/org/@trackingtime/-trackingtime?tab=readme-ov-file#credentials';
+	documentationUrl = 'https://github.com/org/-trackingtime?tab=readme-ov-file#credentials';
 
 	properties: INodeProperties[] = [
 		{
