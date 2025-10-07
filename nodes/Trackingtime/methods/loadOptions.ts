@@ -15,7 +15,11 @@ export async function getAccounts(
 		'trackingtimeApi',
 		{
 			method: 'GET',
+			baseURL: 'https://app.trackingtime.co/api/v4',
 			url: '/teams',
+			headers: {
+				Accept: 'application/json',
+			},
 		},
 	)) as IDataObject;
 
