@@ -17,7 +17,7 @@ export async function getAccounts(
 		{
 			method: 'GET',
 			baseURL: 'https://app.trackingtime.co/api/v4',
-			url: '/teams',
+			url: '/teams?filter=ACTIVE',
 			headers: {
 				Accept: 'application/json',
 			},
