@@ -29,10 +29,11 @@ export async function getAccounts(
 	if (typeof rawResponse === 'string') {
 		try {
 			apiResponse = JSON.parse(rawResponse) as IDataObject;
-		} catch (error) {
+		} catch (parseError: unknown) {
+			const reason = parseError instanceof Error ? parseError.message : 'Unknown JSON parse error';
 			throw new NodeOperationError(
 				this.getNode(),
-				`TrackingTime /teams returned invalid JSON: ${rawResponse}`,
+				`TrackingTime /teams returned invalid JSON (${reason}). Raw response: ${rawResponse}`,
 			);
 		}
 	} else {
@@ -56,7 +57,7 @@ export async function getAccounts(
 	if (options.length === 0) {
 		throw new NodeOperationError(
 			this.getNode(),
-			`TrackingTime /teams returned no selectable accounts. Debug: ${apiResponse.data}, ${accounts}`,
+			`TrackingTime /teams returned no selectable accounts. Debug: ${JSON.stringify(apiResponse)}`,
 		);
 	}
 
