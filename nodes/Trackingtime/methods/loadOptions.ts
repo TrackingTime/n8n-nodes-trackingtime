@@ -3,6 +3,7 @@ import type {
 	ILoadOptionsFunctions,
 	INodePropertyOptions,
 } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 
 /**
  * Fetch the list of accounts available for the current credentials.
@@ -23,7 +24,14 @@ export async function getAccounts(
 		},
 	)) as IDataObject;
 
-	const accounts = (apiResponse.data as IDataObject[] | undefined) ?? [];
+	const accounts = apiResponse.data as IDataObject[] | undefined;
+
+	if (!accounts) {
+		throw new NodeOperationError(
+			this.getNode(),
+			`TrackingTime /teams debug response: ${JSON.stringify(apiResponse)}`,
+		);
+	}
 
 	return accounts
 		.filter((account) => account.account_id != null)
