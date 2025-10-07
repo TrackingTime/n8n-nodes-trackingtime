@@ -18,7 +18,7 @@ type ResponseError = {
 
 export class TrackingtimeTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'TrackingTime Trigger',
+		displayName: 'TrackingTime',
 		name: 'trackingtimeTrigger',
 		icon: { light: 'file:trackingtime.svg', dark: 'file:trackingtime.dark.svg' },
 		group: ['trigger'],
@@ -30,6 +30,13 @@ export class TrackingtimeTrigger implements INodeType {
 		},
 		inputs: [],
 		outputs: ['main'],
+		requestDefaults: {
+			baseURL: 'https://app.trackingtime.co/api/v4',
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/json',
+			},
+		},
 		credentials: [{ name: 'trackingtimeApi', required: true }],
 		webhooks: [
 			{
