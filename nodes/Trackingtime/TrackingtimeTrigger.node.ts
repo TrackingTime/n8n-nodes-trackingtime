@@ -42,7 +42,7 @@ export class TrackingtimeTrigger implements INodeType {
 		],
 		properties: [
 			{
-				displayName: 'Account',
+				displayName: 'Account Name or ID',
 				name: 'accountId',
 				type: 'options',
 				typeOptions: {
@@ -51,7 +51,7 @@ export class TrackingtimeTrigger implements INodeType {
 				required: true,
 				default: '',
 				description:
-					'Select Account',
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 			},
 		],
 	};
