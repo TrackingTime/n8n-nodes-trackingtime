@@ -10,6 +10,12 @@ import { NodeOperationError } from 'n8n-workflow';
 
 import { getAccounts } from './methods/loadOptions';
 
+type ResponseError = {
+	response?: {
+		status?: number;
+	};
+};
+
 export class TrackingtimeTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'TrackingTime Trigger',
@@ -44,7 +50,8 @@ export class TrackingtimeTrigger implements INodeType {
 				},
 				required: true,
 				default: '',
-				description: 'Select the account to subscribe to.',
+				description:
+					'Select Account',
 			},
 		],
 	};
@@ -80,9 +87,10 @@ export class TrackingtimeTrigger implements INodeType {
 					return webhooks.some(
 						(webhook) => String(webhook.id) === String(webhookData.externalHookId),
 					);
-				} catch (error: any) {
+				} catch (error: unknown) {
 					// If the webhook can't be found, ensure it gets recreated.
-					if (error?.response?.status === 404) {
+					const status = (error as ResponseError).response?.status;
+					if (status === 404) {
 						delete webhookData.externalHookId;
 						delete webhookData.secret;
 						return false;
@@ -141,8 +149,9 @@ export class TrackingtimeTrigger implements INodeType {
 						method: 'GET',
 						url: `/${accountId}/webhooks/${externalHookId}/delete`,
 					});
-				} catch (error: any) {
-					if (error?.response?.status !== 404) {
+				} catch (error: unknown) {
+					const status = (error as ResponseError).response?.status;
+					if (status !== 404) {
 						throw error;
 					}
 				}
