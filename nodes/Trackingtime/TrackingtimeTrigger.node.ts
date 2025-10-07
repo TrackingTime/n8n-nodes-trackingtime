@@ -18,7 +18,7 @@ type ResponseError = {
 
 export class TrackingtimeTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'TrackingTime',
+		displayName: 'TrackingTime - Trigger',
 		name: 'trackingtimeTrigger',
 		icon: { light: 'file:trackingtime.svg', dark: 'file:trackingtime.dark.svg' },
 		group: ['trigger'],
