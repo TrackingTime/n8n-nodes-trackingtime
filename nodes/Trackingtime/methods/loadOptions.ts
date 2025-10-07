@@ -41,7 +41,7 @@ export async function getAccounts(
 	if (options.length === 0) {
 		throw new NodeOperationError(
 			this.getNode(),
-			`TrackingTime /teams returned no selectable accounts. Debug: ${JSON.stringify(apiResponse)}`,
+			`TrackingTime /teams returned no selectable accounts. Debug: ${apiResponse}`,
 		);
 	}
 
