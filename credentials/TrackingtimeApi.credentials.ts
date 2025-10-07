@@ -11,12 +11,12 @@ export class TrackingtimeApi implements ICredentialType {
 	displayName = 'Trackingtime API';
 
 	// Link to your community node's README
-	documentationUrl = 'https://github.com/org/-trackingtime?tab=readme-ov-file#credentials';
+	documentationUrl = 'https://developers.trackingtime.co/#intro';
 
 	properties: INodeProperties[] = [
 		{
-			displayName: 'Username',
-			name: 'username',
+			displayName: 'Email',
+			name: 'email',
 			type: 'string',
 			default: '',
 		},
@@ -35,7 +35,7 @@ export class TrackingtimeApi implements ICredentialType {
 		type: 'generic',
 		properties: {
 			auth: {
-				username: '={{$credentials.username}}',
+				username: '={{$credentials.email}}',
 				password: '={{$credentials.password}}',
 			},
 		},
@@ -44,7 +44,7 @@ export class TrackingtimeApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: 'https://app.trackingtime.co/api/v4',
-			url: '/v1/user',
+			url: '/login',
 		},
 	};
 }

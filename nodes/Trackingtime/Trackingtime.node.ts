@@ -4,15 +4,15 @@ import { companyDescription } from './resources/company';
 
 export class Trackingtime implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Trackingtime',
+		displayName: 'TrackingTime',
 		name: 'trackingtime',
 		icon: { light: 'file:trackingtime.svg', dark: 'file:trackingtime.dark.svg' },
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description: 'Interact with the Trackingtime API',
+		description: 'Simple, powerful time and attendance tracking API.',
 		defaults: {
-			name: 'Trackingtime',
+			name: 'TrackingTime',
 		},
 		usableAsTool: true,
 		inputs: ['main'],
