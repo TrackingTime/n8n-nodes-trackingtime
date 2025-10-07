@@ -11,7 +11,7 @@ import { NodeOperationError } from 'n8n-workflow';
 export async function getAccounts(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-	const apiResponse = (await this.helpers.requestWithAuthentication.call(
+	const rawResponse = (await this.helpers.requestWithAuthentication.call(
 		this,
 		'trackingtimeApi',
 		{
@@ -22,7 +22,22 @@ export async function getAccounts(
 				Accept: 'application/json',
 			},
 		},
-	)) as IDataObject;
+	)) as IDataObject | string;
+
+	let apiResponse: IDataObject;
+
+	if (typeof rawResponse === 'string') {
+		try {
+			apiResponse = JSON.parse(rawResponse) as IDataObject;
+		} catch (error) {
+			throw new NodeOperationError(
+				this.getNode(),
+				`TrackingTime /teams returned invalid JSON: ${rawResponse}`,
+			);
+		}
+	} else {
+		apiResponse = rawResponse;
+	}
 
 	const accounts = (apiResponse.data as IDataObject[] | undefined) ?? [];
 
