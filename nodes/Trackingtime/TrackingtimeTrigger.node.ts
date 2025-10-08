@@ -10,11 +10,7 @@ import { NodeOperationError } from 'n8n-workflow';
 
 import { TRACKINGTIME_BASE_URL } from './constants';
 import { getAccounts } from './methods/loadOptions';
-import {
-	handleTrackingTimeApiError,
-	parseTrackingTimeResponse,
-	summarizeTrackingTimeError,
-} from './utils';
+import { handleTrackingTimeApiError, parseTrackingTimeResponse } from './utils';
 
 type ResponseError = {
 	response?: {
@@ -79,48 +75,7 @@ export class TrackingtimeTrigger implements INodeType {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {
 				const webhookData = this.getWorkflowStaticData('node') as IDataObject;
-				if (!webhookData.externalHookId) {
-					return false;
-				}
-
-				const accountId = this.getNodeParameter('accountId') as string;
-
-				try {
-					const response = (await this.helpers.requestWithAuthentication.call(
-						this,
-						'trackingtimeApi',
-						{
-							method: 'GET',
-							baseURL: TRACKINGTIME_BASE_URL,
-							url: `/${accountId}/webhooks`,
-						},
-					)) as IDataObject | string;
-
-					const parsedResponse = parseTrackingTimeResponse(this, response, 'GET /webhooks');
-
-					const webhooks = (parsedResponse.data as IDataObject[] | undefined) ?? [];
-
-					return webhooks.some(
-						(webhook) => String(webhook.id) === String(webhookData.externalHookId),
-					);
-				} catch (error: unknown) {
-					// If the webhook can't be found, ensure it gets recreated.
-					const status = (error as ResponseError).response?.status;
-					if (status === 404) {
-						delete webhookData.externalHookId;
-						delete webhookData.secret;
-						return false;
-					}
-
-					const summary = summarizeTrackingTimeError(error, 'TrackingTime webhook check (ignored)');
-					if (summary.description) {
-						webhookData.lastCheckError = `${summary.message}\n${summary.description}`;
-					} else {
-						webhookData.lastCheckError = summary.message;
-					}
-
-					return Boolean(webhookData.externalHookId);
-				}
+				return Boolean(webhookData.externalHookId);
 			},
 
 			async create(this: IHookFunctions): Promise<boolean> {
