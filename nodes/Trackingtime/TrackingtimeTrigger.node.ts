@@ -10,7 +10,11 @@ import { NodeOperationError } from 'n8n-workflow';
 
 import { TRACKINGTIME_BASE_URL } from './constants';
 import { getAccounts } from './methods/loadOptions';
-import { handleTrackingTimeApiError, parseTrackingTimeResponse } from './utils';
+import {
+	handleTrackingTimeApiError,
+	parseTrackingTimeResponse,
+	summarizeTrackingTimeError,
+} from './utils';
 
 type ResponseError = {
 	response?: {
@@ -146,7 +150,17 @@ export class TrackingtimeTrigger implements INodeType {
 				} catch (error: unknown) {
 					const status = (error as ResponseError).response?.status;
 					if (status !== 404) {
-						handleTrackingTimeApiError(this, error, 'TrackingTime webhook deletion');
+						if (status && status >= 500) {
+							const summary = summarizeTrackingTimeError(error, 'TrackingTime webhook deletion (ignored)');
+							const message = summary.description
+								? `${summary.message}\n${summary.description}`
+								: summary.message;
+							const logs = (webhookData.deletionAttempts as string[] | undefined) ?? [];
+							logs.push(message);
+							webhookData.deletionAttempts = logs.slice(-5);
+						} else {
+							handleTrackingTimeApiError(this, error, 'TrackingTime webhook deletion');
+						}
 					}
 				}
 
