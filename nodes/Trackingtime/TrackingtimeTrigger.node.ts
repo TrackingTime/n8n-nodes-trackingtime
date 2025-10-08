@@ -8,6 +8,7 @@ import type {
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
+import { TRACKINGTIME_BASE_URL } from './constants';
 import { getAccounts } from './methods/loadOptions';
 
 type ResponseError = {
@@ -31,7 +32,7 @@ export class TrackingtimeTrigger implements INodeType {
 		inputs: [],
 		outputs: ['main'],
 		requestDefaults: {
-			baseURL: 'https://app.trackingtime.co/api/v4',
+			baseURL: TRACKINGTIME_BASE_URL,
 			headers: {
 				Accept: 'application/json',
 				'Content-Type': 'application/json',
@@ -85,6 +86,7 @@ export class TrackingtimeTrigger implements INodeType {
 						'trackingtimeApi',
 						{
 							method: 'GET',
+							baseURL: TRACKINGTIME_BASE_URL,
 							url: `/${accountId}/webhooks`,
 						},
 					)) as IDataObject;
@@ -116,6 +118,7 @@ export class TrackingtimeTrigger implements INodeType {
 					'trackingtimeApi',
 					{
 						method: 'GET',
+						baseURL: TRACKINGTIME_BASE_URL,
 						url: `/${accountId}/webhooks/add`,
 						qs: {
 							url: webhookUrl,
@@ -154,6 +157,7 @@ export class TrackingtimeTrigger implements INodeType {
 				try {
 					await this.helpers.requestWithAuthentication.call(this, 'trackingtimeApi', {
 						method: 'GET',
+						baseURL: TRACKINGTIME_BASE_URL,
 						url: `/${accountId}/webhooks/${externalHookId}/delete`,
 					});
 				} catch (error: unknown) {

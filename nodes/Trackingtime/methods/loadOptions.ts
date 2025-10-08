@@ -1,9 +1,7 @@
-import type {
-	IDataObject,
-	ILoadOptionsFunctions,
-	INodePropertyOptions,
-} from 'n8n-workflow';
+import type { IDataObject, ILoadOptionsFunctions, INodePropertyOptions } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
+
+import { TRACKINGTIME_BASE_URL } from '../constants';
 
 /**
  * Fetch the list of accounts available for the current credentials.
@@ -16,7 +14,7 @@ export async function getAccounts(
 		'trackingtimeApi',
 		{
 			method: 'GET',
-			baseURL: 'https://app.trackingtime.co/api/v4',
+			baseURL: TRACKINGTIME_BASE_URL,
 			url: '/teams?filter=ACTIVE',
 			headers: {
 				Accept: 'application/json',
