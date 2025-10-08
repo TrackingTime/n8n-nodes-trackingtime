@@ -43,9 +43,17 @@ export const handleTrackingTimeApiError = (
 	debugLabel: string,
 ): never => {
 	if (error instanceof NodeApiError) {
-		const description = extractDescription(error.description);
-		throw new NodeOperationError(context.getNode(), `${debugLabel}: ${error.message}`, {
-			description,
+		const fallbackDescription = extractDescription(error.description);
+		const contextPayload = extractContextData(error.context);
+		const originalMessages = Array.isArray(error.messages) ? error.messages.filter(Boolean) : [];
+		const aggregatedDetails = [fallbackDescription, contextPayload, formatMessages(originalMessages)]
+			.filter((value): value is string => value != null && value !== '')
+			.join('\n');
+
+		const resolvedMessage = `${debugLabel}: ${originalMessages[0] ?? error.message}`;
+
+		throw new NodeOperationError(context.getNode(), resolvedMessage, {
+			description: aggregatedDetails || undefined,
 		});
 	}
 
@@ -70,4 +78,27 @@ const extractDescription = (description: unknown): string | undefined => {
 	} catch (stringifyError) {
 		return `Unable to stringify error description: ${String(stringifyError)}`;
 	}
+};
+
+const extractContextData = (context: unknown): string | undefined => {
+	if (!context || typeof context !== 'object') {
+		return undefined;
+	}
+
+	const data = (context as { data?: JsonObject }).data ?? undefined;
+	const payload = data && Object.keys(data).length > 0 ? data : context;
+
+	if (!payload || typeof payload !== 'object' || Object.keys(payload).length === 0) {
+		return undefined;
+	}
+
+	return `Response data: ${JSON.stringify(payload)}`;
+};
+
+const formatMessages = (messages: string[]): string | undefined => {
+	if (!messages.length) {
+		return undefined;
+	}
+
+	return `Messages: ${messages.join(' | ')}`;
 };
