@@ -195,16 +195,13 @@ export class TrackingtimeTrigger implements INodeType {
 	};
 
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
-		const bodyData = this.getBodyData() as IDataObject;
+		const bodyData = this.getBodyData();
+		const items = Array.isArray(bodyData)
+			? bodyData.map((entry) => ({ json: (entry ?? {}) as IDataObject }))
+			: [{ json: (bodyData ?? {}) as IDataObject }];
 
 		return {
-			workflowData: [
-				[
-					{
-						json: bodyData,
-					},
-				],
-			],
+			workflowData: [items],
 		};
 	}
 }
