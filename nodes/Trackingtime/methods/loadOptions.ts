@@ -2,6 +2,7 @@ import type { IDataObject, ILoadOptionsFunctions, INodePropertyOptions } from 'n
 import { NodeOperationError } from 'n8n-workflow';
 
 import { TRACKINGTIME_BASE_URL } from '../constants';
+import { parseTrackingTimeResponse } from '../utils';
 
 /**
  * Fetch the list of accounts available for the current credentials.
@@ -22,21 +23,7 @@ export async function getAccounts(
 		},
 	)) as IDataObject | string;
 
-	let apiResponse: IDataObject;
-
-	if (typeof rawResponse === 'string') {
-		try {
-			apiResponse = JSON.parse(rawResponse) as IDataObject;
-		} catch (parseError: unknown) {
-			const reason = parseError instanceof Error ? parseError.message : 'Unknown JSON parse error';
-			throw new NodeOperationError(
-				this.getNode(),
-				`TrackingTime /teams returned invalid JSON (${reason}). Raw response: ${rawResponse}`,
-			);
-		}
-	} else {
-		apiResponse = rawResponse;
-	}
+	const apiResponse = parseTrackingTimeResponse(this, rawResponse, 'GET /teams');
 
 	const accounts = (apiResponse.data as IDataObject[] | undefined) ?? [];
 

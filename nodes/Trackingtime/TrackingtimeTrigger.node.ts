@@ -10,30 +10,12 @@ import { NodeOperationError } from 'n8n-workflow';
 
 import { TRACKINGTIME_BASE_URL } from './constants';
 import { getAccounts } from './methods/loadOptions';
+import { handleTrackingTimeApiError, parseTrackingTimeResponse } from './utils';
 
 type ResponseError = {
 	response?: {
 		status?: number;
 	};
-};
-
-const parseTrackingTimeResponse = (
-	context: IHookFunctions,
-	rawResponse: IDataObject | string,
-): IDataObject => {
-	if (typeof rawResponse === 'string') {
-		try {
-			return JSON.parse(rawResponse) as IDataObject;
-		} catch (parseError: unknown) {
-			const reason = parseError instanceof Error ? parseError.message : 'Unknown JSON parse error';
-			throw new NodeOperationError(
-				context.getNode(),
-				`TrackingTime API returned invalid JSON (${reason}). Raw response: ${rawResponse}`,
-			);
-		}
-	}
-
-	return rawResponse;
 };
 
 export class TrackingtimeTrigger implements INodeType {
@@ -110,7 +92,7 @@ export class TrackingtimeTrigger implements INodeType {
 						},
 					)) as IDataObject | string;
 
-					const parsedResponse = parseTrackingTimeResponse(this, response);
+					const parsedResponse = parseTrackingTimeResponse(this, response, 'GET /webhooks');
 
 					const webhooks = (parsedResponse.data as IDataObject[] | undefined) ?? [];
 
@@ -126,45 +108,52 @@ export class TrackingtimeTrigger implements INodeType {
 						return false;
 					}
 
-					throw error;
+					handleTrackingTimeApiError(this, error, 'TrackingTime webhook check');
 				}
+
+				return false;
 			},
 
 			async create(this: IHookFunctions): Promise<boolean> {
 				const accountId = this.getNodeParameter('accountId') as string;
 				const webhookUrl = this.getNodeWebhookUrl('default');
 
-				const response = (await this.helpers.requestWithAuthentication.call(
-					this,
-					'trackingtimeApi',
-					{
-						method: 'GET',
-						baseURL: TRACKINGTIME_BASE_URL,
-						url: `/${accountId}/webhooks/add`,
-						qs: {
-							url: webhookUrl,
-							events: 'event.updated,event.created',
-							grouped: 'false',
+				try {
+					const response = (await this.helpers.requestWithAuthentication.call(
+						this,
+						'trackingtimeApi',
+						{
+							method: 'GET',
+							baseURL: TRACKINGTIME_BASE_URL,
+							url: `/${accountId}/webhooks/add`,
+							qs: {
+								url: webhookUrl,
+								events: 'event.updated,event.created',
+								grouped: 'false',
+							},
 						},
-					},
-				)) as IDataObject | string;
+					)) as IDataObject | string;
 
-				const parsedResponse = parseTrackingTimeResponse(this, response);
+					const parsedResponse = parseTrackingTimeResponse(this, response, 'GET /webhooks/add');
+					const webhookInfo = parsedResponse.data as IDataObject | undefined;
 
-				const webhookInfo = parsedResponse.data as IDataObject | undefined;
+					if (!webhookInfo?.id) {
+						throw new NodeOperationError(this.getNode(), 'Webhook creation failed: missing webhook id.');
+					}
 
-				if (!webhookInfo?.id) {
-					throw new NodeOperationError(this.getNode(), 'Webhook creation failed: missing webhook id.');
+					const webhookData = this.getWorkflowStaticData('node') as IDataObject;
+					webhookData.externalHookId = webhookInfo.id;
+
+					if (webhookInfo.secret) {
+						webhookData.secret = webhookInfo.secret;
+					}
+
+					return true;
+				} catch (error: unknown) {
+					handleTrackingTimeApiError(this, error, 'TrackingTime webhook creation');
 				}
 
-				const webhookData = this.getWorkflowStaticData('node') as IDataObject;
-				webhookData.externalHookId = webhookInfo.id;
-
-				if (webhookInfo.secret) {
-					webhookData.secret = webhookInfo.secret;
-				}
-
-				return true;
+				return false;
 			},
 
 			async delete(this: IHookFunctions): Promise<boolean> {
@@ -182,18 +171,18 @@ export class TrackingtimeTrigger implements INodeType {
 						this,
 						'trackingtimeApi',
 						{
-						method: 'GET',
-						baseURL: TRACKINGTIME_BASE_URL,
-						url: `/${accountId}/webhooks/${externalHookId}/delete`,
-					},
+							method: 'GET',
+							baseURL: TRACKINGTIME_BASE_URL,
+							url: `/${accountId}/webhooks/${externalHookId}/delete`,
+						},
 					)) as IDataObject | string;
 
 					// Ensure the response is valid JSON even if we do not use it afterward.
-					parseTrackingTimeResponse(this, response);
+					parseTrackingTimeResponse(this, response, 'GET /webhooks/{id}/delete');
 				} catch (error: unknown) {
 					const status = (error as ResponseError).response?.status;
 					if (status !== 404) {
-						throw error;
+						handleTrackingTimeApiError(this, error, 'TrackingTime webhook deletion');
 					}
 				}
 
