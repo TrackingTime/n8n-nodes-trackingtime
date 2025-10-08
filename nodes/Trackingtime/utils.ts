@@ -37,31 +37,52 @@ export const parseTrackingTimeResponse = (
 	return rawResponse;
 };
 
+export const summarizeTrackingTimeError = (
+	error: unknown,
+	debugLabel?: string,
+): { message: string; description?: string } => {
+	const prefix = debugLabel ? `${debugLabel}: ` : '';
+
+	if (error instanceof NodeApiError) {
+		const fallbackDescription = extractDescription(error.description);
+		const contextPayload = extractContextData(error.context);
+		const originalMessages = Array.isArray(error.messages) ? error.messages.filter(Boolean) : [];
+		const extraMessages = originalMessages.slice(1);
+		const aggregatedDetails = [
+			fallbackDescription,
+			contextPayload,
+			formatMessages(extraMessages),
+		]
+			.filter((value): value is string => value != null && value !== '')
+			.join('\n');
+
+		return {
+			message: `${prefix}${originalMessages[0] ?? error.message}`,
+			description: aggregatedDetails || undefined,
+		};
+	}
+
+	if (error instanceof Error) {
+		return {
+			message: `${prefix}${error.message}`,
+		};
+	}
+
+	return {
+		message: `${prefix}${String(error)}`,
+	};
+};
+
 export const handleTrackingTimeApiError = (
 	context: NodeContext,
 	error: unknown,
 	debugLabel: string,
 ): never => {
-	if (error instanceof NodeApiError) {
-		const fallbackDescription = extractDescription(error.description);
-		const contextPayload = extractContextData(error.context);
-		const originalMessages = Array.isArray(error.messages) ? error.messages.filter(Boolean) : [];
-		const aggregatedDetails = [fallbackDescription, contextPayload, formatMessages(originalMessages)]
-			.filter((value): value is string => value != null && value !== '')
-			.join('\n');
+	const summary = summarizeTrackingTimeError(error, debugLabel);
 
-		const resolvedMessage = `${debugLabel}: ${originalMessages[0] ?? error.message}`;
-
-		throw new NodeOperationError(context.getNode(), resolvedMessage, {
-			description: aggregatedDetails || undefined,
-		});
-	}
-
-	if (error instanceof Error) {
-		throw new NodeOperationError(context.getNode(), `${debugLabel}: ${error.message}`);
-	}
-
-	throw new NodeOperationError(context.getNode(), `${debugLabel}: ${String(error)}`);
+	throw new NodeOperationError(context.getNode(), summary.message, {
+		description: summary.description,
+	});
 };
 
 const extractDescription = (description: unknown): string | undefined => {

@@ -10,7 +10,11 @@ import { NodeOperationError } from 'n8n-workflow';
 
 import { TRACKINGTIME_BASE_URL } from './constants';
 import { getAccounts } from './methods/loadOptions';
-import { handleTrackingTimeApiError, parseTrackingTimeResponse } from './utils';
+import {
+	handleTrackingTimeApiError,
+	parseTrackingTimeResponse,
+	summarizeTrackingTimeError,
+} from './utils';
 
 type ResponseError = {
 	response?: {
@@ -108,10 +112,15 @@ export class TrackingtimeTrigger implements INodeType {
 						return false;
 					}
 
-					handleTrackingTimeApiError(this, error, 'TrackingTime webhook check');
-				}
+					const summary = summarizeTrackingTimeError(error, 'TrackingTime webhook check (ignored)');
+					if (summary.description) {
+						webhookData.lastCheckError = `${summary.message}\n${summary.description}`;
+					} else {
+						webhookData.lastCheckError = summary.message;
+					}
 
-				return false;
+					return Boolean(webhookData.externalHookId);
+				}
 			},
 
 			async create(this: IHookFunctions): Promise<boolean> {
