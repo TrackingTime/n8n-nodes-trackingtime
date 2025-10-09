@@ -21,7 +21,7 @@ type TrackingTimeResponse = {
 	data?: TrackingTimeAction[];
 };
 
-export class TrackingTime implements INodeType {
+export class Trackingtime implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'TrackingTime',
 		name: 'trackingtime',
@@ -119,11 +119,48 @@ export class TrackingTime implements INodeType {
 
                         responseData = responseData?.data;
                     }
-					if (operation === 'search') {
-						/*const orderId = this.getNodeParameter('orderId', i) as string;
-						responseData = await shopifyApiRequest.call(this, 'DELETE', `/orders/${orderId}.json`);
-						responseData = { success: true };*/
-					}
+                    if (operation === 'search') {
+                        const accountId = this.getNodeParameter('accountId', i) as string;
+                        const selectCriteria = this.getNodeParameter('selectCriteria', i) as string;
+
+                        const qs: IDataObject = {};
+
+                        switch (selectCriteria) {
+                            case 'ByID':
+                                qs.event_id = this.getNodeParameter('timeEntryId', i) as string;
+                                break;
+                            case 'ByExternalID':
+                                qs.third_party_event_id = this.getNodeParameter('externalId', i) as string;
+                                break;
+                            case 'ByTaskID':
+                                qs.task_id = this.getNodeParameter('taskId', i) as string;
+                                break;
+                            case 'ByTaskExternalID':
+                                qs.third_party_task_id = this.getNodeParameter('taskExternalId', i) as string;
+                                break;
+                            case 'ByProjectID':
+                                qs.project_id = this.getNodeParameter('projectId', i) as string;
+                                break;
+                            case 'ByProjectExternalID':
+                                qs.third_party_project_id = this.getNodeParameter('projectExternalId', i) as string;
+                                break;
+                            case 'ByProjectOrTaskName':
+                                qs.project_name = this.getNodeParameter('projectName', i) as string;
+                                break;
+                        }
+
+                        if (['ByProjectID', 'ByProjectExternalID', 'ByProjectOrTaskName'].includes(selectCriteria)) {
+                            const taskName = this.getNodeParameter('taskName', i, '') as string;
+                            if (taskName) {
+                                qs.task_name = taskName;
+                            }
+                        }
+
+                        const endpoint = `/${accountId}/search/events`;
+                        responseData = await trackingTimeApiRequest.call(this, 'GET', endpoint, {}, qs) as TrackingTimeResponse;
+
+                        responseData = responseData?.data;
+                    }
 					if (operation === 'update') {
 						/*const orderId = this.getNodeParameter('orderId', i) as string;
 						const options = this.getNodeParameter('options', i);

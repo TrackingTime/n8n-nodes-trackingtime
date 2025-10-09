@@ -137,7 +137,6 @@ export const timeEntryFields: INodeProperties[] = [
 			},
 		},
 		default: 'ByID',
-		// Options are now sorted alphabetically by name
 		options: [
 			{
 				name: 'Project or Task Name',
@@ -170,7 +169,6 @@ export const timeEntryFields: INodeProperties[] = [
 		],
 	},
 	{
-		// FIX: Corrected casing from ID to Id
 		displayName: 'Time Entry ID',
 		name: 'timeEntryId',
 		type: 'string',
@@ -185,7 +183,6 @@ export const timeEntryFields: INodeProperties[] = [
 		},
 	},
 	{
-		// FIX: Corrected casing from ID to Id
 		displayName: 'Third Party Time Entry ID',
 		name: 'externalId',
 		type: 'string',
