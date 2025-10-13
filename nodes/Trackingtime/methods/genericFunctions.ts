@@ -1,4 +1,3 @@
-import { snakeCase } from 'change-case';
 import type {
 	IDataObject,
 	IExecuteFunctions,
@@ -42,6 +41,12 @@ export async function trackingTimeApiRequest<T = IDataObject>(
 	return (await this.helpers.requestWithAuthentication.call(this, credentialType, options)) as T;
 }
 
+const toSnakeCase = (value: string): string =>
+	value
+		.replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+		.replace(/[\s-]+/g, '_')
+		.toLowerCase();
+
 export function keysToSnakeCase(elements: IDataObject[] | IDataObject): IDataObject[] {
 	if (elements === undefined) {
 		return [];
@@ -51,8 +56,10 @@ export function keysToSnakeCase(elements: IDataObject[] | IDataObject): IDataObj
 	}
 	for (const element of elements) {
 		for (const key of Object.keys(element)) {
-			if (key !== snakeCase(key)) {
-				element[snakeCase(key)] = element[key];
+			const snakeKey = toSnakeCase(key);
+
+			if (key !== snakeKey) {
+				element[snakeKey] = element[key];
 				delete element[key];
 			}
 		}

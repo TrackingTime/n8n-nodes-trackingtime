@@ -8,6 +8,8 @@ import type {
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import { trackingTimeApiRequest } from './methods/genericFunctions';
 import { timeEntryFields, timeEntryOperations } from './timeEntryOperation';
+import { getTimeEntrySearchFields, TIME_ENTRY_SEARCH_ENTITY } from './methods/resourceMapping';
+import { getAccounts } from './methods/loadOptions';
 
 //import { productFields, productOperations } from './ProductDescription';
 //import type { IProduct } from './ProductInterface';
@@ -34,11 +36,7 @@ export class Trackingtime implements INodeType {
 			name: 'TrackingTime',
 		},
 		usableAsTool: true,
-		inputs: [/* `NodeConnectionTypes` is an enum that defines the different types of connections that a
-        node can have in n8n workflows. It is used to specify the input and output connection
-        types for a node. In this context, it is being used to define the type of connections
-        that the `TrackingTime` node can have. */
-        NodeConnectionTypes.Main],
+		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
 		credentials: [{ name: 'trackingtimeApi', required: true }],
 		properties: [
@@ -61,228 +59,186 @@ export class Trackingtime implements INodeType {
 		],
 	};
 
+	methods = {
+		loadOptions: {
+			getAccounts,
+		},
+		resourceMapping: {
+			getTimeEntrySearchFields,
+		},
+	};
+
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
 		const length = items.length;
-		let responseData;
-		const qs: IDataObject = {};
 		const resource = this.getNodeParameter('resource', 0);
 		const operation = this.getNodeParameter('operation', 0);
+
 		for (let i = 0; i < length; i++) {
 			try {
+				let responseData: TrackingTimeAction[] | TrackingTimeAction | undefined;
+
 				if (resource === 'timeEntry') {
+					const accountId = this.getNodeParameter('accountId', i) as string;
+
+					const buildTimeEntryQuery = (fields: IDataObject): IDataObject => {
+						const query: IDataObject = {};
+						const customFieldsArray: IDataObject[] = [];
+
+						const assignIfPresent = (sourceKey: string, targetKey?: string) => {
+							const value = fields[sourceKey];
+
+							if (value === undefined || value === null || value === '') {
+								return;
+							}
+
+							query[targetKey ?? sourceKey] = value;
+						};
+
+						assignIfPresent('duration');
+						assignIfPresent('project', 'project_name');
+						assignIfPresent('start');
+						assignIfPresent('end');
+						assignIfPresent('user_id');
+						assignIfPresent('notes');
+
+						const rawJson = fields.json_;
+
+						if (typeof rawJson === 'string' && rawJson.trim() !== '') {
+							try {
+								const parsedJson = JSON.parse(rawJson);
+
+								if (parsedJson.parameters && Array.isArray(parsedJson.parameters)) {
+									for (const param of parsedJson.parameters) {
+										if (param?.parameter) {
+											query[param.parameter] = param.value;
+										}
+									}
+								}
+
+								if (parsedJson.custom_fields && Array.isArray(parsedJson.custom_fields)) {
+									for (const cf of parsedJson.custom_fields) {
+										if (cf?.id !== undefined) {
+											customFieldsArray.push({ id: cf.id, value: cf.value });
+										}
+									}
+								}
+							} catch (error) {
+								this.logger.error(error);
+								throw new NodeOperationError(
+									this.getNode(),
+									'The Field Extra Params is not a valid JSON.',
+									{ itemIndex: i },
+								);
+							}
+						}
+
+						if (typeof fields.custom_field_id === 'string' && fields.custom_field_id.trim() !== '') {
+							customFieldsArray.push({
+								slug: 'EVENT_THIRD_PARTY_ID',
+								value: fields.custom_field_id,
+							});
+							customFieldsArray.push({ slug: 'EVENT_THIRD_PARTY_SERVICE', value: 'N8N' });
+						}
+
+						if (customFieldsArray.length > 0) {
+							query.custom_fields = JSON.stringify(customFieldsArray);
+						}
+
+						return query;
+					};
+
 					if (operation === 'add') {
-                        const fields = this.getNodeParameter('fields', i) as IDataObject;
-                        const accountId = this.getNodeParameter('accountId', i) as string;
-
-                        if (fields.duration) qs.duration = fields.duration;
-                        if (fields.project) qs.project_name = fields.project;
-                        if (fields.start) qs.start = fields.start;
-                        if (fields.end) qs.end = fields.end;
-                        if (fields.user_id) qs.user_id = fields.user_id;
-                        if (fields.notes) qs.notes = fields.notes;
-
-                        const customFieldsArray: IDataObject[] = [];
-
-                        if (fields.json_) {
-                            try {
-                                const parsedJson = JSON.parse(fields.json_ as string);
-
-                                if (parsedJson.parameters && Array.isArray(parsedJson.parameters)) {
-                                    for (const param of parsedJson.parameters) {
-                                        qs[param.parameter] = param.value;
-                                    }
-                                }
-
-                                if (parsedJson.custom_fields && Array.isArray(parsedJson.custom_fields)) {
-                                    for (const cf of parsedJson.custom_fields) {
-                                        customFieldsArray.push({ id: cf.id, value: cf.value });
-                                    }
-                                }
-                            } catch (error) {
-                                this.logger.error(error);
-                                throw new NodeOperationError(this.getNode(), 'The Field Extra Params is not a valid JSON.', { itemIndex: i });
-                            }
-                        }
-
-                        if (fields.custom_field_id) {
-                            customFieldsArray.push({ slug: 'EVENT_THIRD_PARTY_ID', value: fields.custom_field_id });
-                            customFieldsArray.push({ slug: 'EVENT_THIRD_PARTY_SERVICE', value: 'N8N' });
-                        }
-
-                        if (customFieldsArray.length > 0) {
-                            qs.custom_fields = JSON.stringify(customFieldsArray);
-                        }
-
-                        responseData = await trackingTimeApiRequest.call(this, 'GET', `/${accountId}/events/add`, {}, qs) as TrackingTimeResponse;
-
-                        responseData = responseData?.data;
-                    }
-                    if (operation === 'search') {
-                        const accountId = this.getNodeParameter('accountId', i) as string;
-                        const selectCriteria = this.getNodeParameter('selectCriteria', i) as string;
-
-                        const qs: IDataObject = {};
-
-                        switch (selectCriteria) {
-                            case 'ByID':
-                                qs.event_id = this.getNodeParameter('timeEntryId', i) as string;
-                                break;
-                            case 'ByExternalID':
-                                qs.third_party_event_id = this.getNodeParameter('externalId', i) as string;
-                                break;
-                            case 'ByTaskID':
-                                qs.task_id = this.getNodeParameter('taskId', i) as string;
-                                break;
-                            case 'ByTaskExternalID':
-                                qs.third_party_task_id = this.getNodeParameter('taskExternalId', i) as string;
-                                break;
-                            case 'ByProjectID':
-                                qs.project_id = this.getNodeParameter('projectId', i) as string;
-                                break;
-                            case 'ByProjectExternalID':
-                                qs.third_party_project_id = this.getNodeParameter('projectExternalId', i) as string;
-                                break;
-                            case 'ByProjectOrTaskName':
-                                qs.project_name = this.getNodeParameter('projectName', i) as string;
-                                break;
-                        }
-
-                        if (['ByProjectID', 'ByProjectExternalID', 'ByProjectOrTaskName'].includes(selectCriteria)) {
-                            const taskName = this.getNodeParameter('taskName', i, '') as string;
-                            if (taskName) {
-                                qs.task_name = taskName;
-                            }
-                        }
-
-                        const endpoint = `/${accountId}/search/events`;
-                        responseData = await trackingTimeApiRequest.call(this, 'GET', endpoint, {}, qs) as TrackingTimeResponse;
-
-                        responseData = responseData?.data;
-                    }
-					if (operation === 'update') {
-						/*const orderId = this.getNodeParameter('orderId', i) as string;
-						const options = this.getNodeParameter('options', i);
-						if (options.fields) {
-							qs.fields = options.fields as string;
-						}
-						responseData = await shopifyApiRequest.call(
+						const fields = this.getNodeParameter('fields', i) as IDataObject;
+						const query = buildTimeEntryQuery(fields);
+						const addResponse = (await trackingTimeApiRequest.call(
 							this,
 							'GET',
-							`/orders/${orderId}.json`,
+							`/${accountId}/events/add`,
 							{},
-							qs,
-						);
-						responseData = responseData.order;*/
+							query,
+						)) as TrackingTimeResponse;
+
+						responseData = addResponse?.data ?? [];
 					}
-				} else if (resource === 'product') {
-					/*const productId = this.getNodeParameter('productId', i, '') as string;
-					let body: IProduct = {};
-					//https://shopify.dev/docs/admin-api/rest/reference/products/product#create-2020-04
-					if (operation === 'create') {
-						const title = this.getNodeParameter('title', i) as string;
+					if (operation === 'search') {
+						const selectCriteria = this.getNodeParameter('selectCriteria', i) as string;
+						const mappingMode = this.getNodeParameter('searchFields.mappingMode', i) as string;
 
-						const additionalFields = this.getNodeParameter('additionalFields', i, {});
-
-						if (additionalFields.productOptions) {
-							const metadata = (additionalFields.productOptions as IDataObject)
-								.option as IDataObject[];
-							additionalFields.options = {};
-							for (const data of metadata) {
-								//@ts-ignore
-								additionalFields.options[data.name as string] = data.value;
-							}
-							delete additionalFields.productOptions;
-						}
-
-						body = additionalFields;
-
-						body.title = title;
-
-						responseData = await shopifyApiRequest.call(this, 'POST', '/products.json', {
-							product: body,
-						});
-						responseData = responseData.product;
-					}
-					if (operation === 'delete') {
-						//https://shopify.dev/docs/admin-api/rest/reference/products/product#destroy-2020-04
-						responseData = await shopifyApiRequest.call(
-							this,
-							'DELETE',
-							`/products/${productId}.json`,
-						);
-						responseData = { success: true };
-					}
-					if (operation === 'get') {
-						//https://shopify.dev/docs/admin-api/rest/reference/products/product#show-2020-04
-						const additionalFields = this.getNodeParameter('additionalFields', i, {});
-						Object.assign(qs, additionalFields);
-						responseData = await shopifyApiRequest.call(
-							this,
-							'GET',
-							`/products/${productId}.json`,
-							{},
-							qs,
-						);
-						responseData = responseData.product;
-					}
-					if (operation === 'getAll') {
-						//https://shopify.dev/docs/admin-api/rest/reference/products/product#index-2020-04
-						const additionalFields = this.getNodeParameter('additionalFields', i, {});
-
-						const returnAll = this.getNodeParameter('returnAll', i);
-
-						Object.assign(qs, additionalFields);
-
-						if (returnAll) {
-							responseData = await trackingTimeApiRequest.call(
-								this,
-								'products',
-								'GET',
-								'/products.json',
-								{},
-								qs,
+						if (mappingMode !== 'defineBelow') {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Only the "Define Below" option is supported for Search Fields.',
+								{ itemIndex: i },
 							);
-						} else {
-							qs.limit = this.getNodeParameter('limit', i);
-							responseData = await shopifyApiRequest.call(this, 'GET', '/products.json', {}, qs);
-							responseData = responseData.products;
 						}
-					}
-					if (operation === 'update') {
-						//https://shopify.dev/docs/admin-api/rest/reference/products/product?api[version]=2020-07#update-2020-07
-						const updateFields = this.getNodeParameter('updateFields', i, {});
 
-						if (updateFields.productOptions) {
-							const metadata = (updateFields.productOptions as IDataObject).option as IDataObject[];
-							updateFields.options = {};
-							for (const data of metadata) {
-								//@ts-ignore
-								updateFields.options[data.name as string] = data.value;
+						const rawFilters = this.getNodeParameter('searchFields.value', i, {}) as IDataObject;
+						const query: IDataObject = {};
+
+						for (const [key, value] of Object.entries(rawFilters)) {
+							if (value === undefined || value === null) {
+								continue;
 							}
-							delete updateFields.productOptions;
+
+							if (typeof value === 'string' && value.trim() === '') {
+								continue;
+							}
+
+							query[key] = value;
 						}
 
-						body = updateFields;
+						query.type = selectCriteria;
+						query.entity = TIME_ENTRY_SEARCH_ENTITY;
 
-						responseData = await shopifyApiRequest.call(
+						const endpoint = `/${accountId}/search/events`;
+						const searchResponse = (await trackingTimeApiRequest.call(
 							this,
-							'PUT',
-							`/products/${productId}.json`,
-							{ product: body },
-						);
+							'GET',
+							endpoint,
+							{},
+							query,
+						)) as TrackingTimeResponse;
 
-						responseData = responseData.product;
-					}*/
+						responseData = searchResponse?.data ?? [];
+					}
+
+					if (operation === 'update') {
+						const eventId = this.getNodeParameter('event_id', i) as string;
+						const updateFields = this.getNodeParameter('updateFields', i) as IDataObject;
+						const query = buildTimeEntryQuery(updateFields);
+
+						query.event_id = eventId;
+
+						const endpoint = `/${accountId}/events/${eventId}/update`;
+						const updateResponse = (await trackingTimeApiRequest.call(
+							this,
+							'GET',
+							endpoint,
+							{},
+							query,
+						)) as TrackingTimeResponse;
+
+						responseData = updateResponse?.data ?? [];
+					}
 				}
 
+				const normalizedData = Array.isArray(responseData)
+					? responseData
+					: responseData
+					? [responseData]
+					: [];
+				const itemsToReturn =
+					normalizedData.length > 0 ? (normalizedData as IDataObject[]) : [{} as IDataObject];
+
 				const executionData = this.helpers.constructExecutionMetaData(
-					this.helpers.returnJsonArray(responseData as IDataObject[]),
+					this.helpers.returnJsonArray(itemsToReturn),
 					{ itemData: { item: i } },
 				);
 
 				returnData.push(...executionData);
+
 			} catch (error) {
 				if (this.continueOnFail()) {
 					const executionErrorData = this.helpers.constructExecutionMetaData(

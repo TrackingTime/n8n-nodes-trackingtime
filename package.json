@@ -3,17 +3,17 @@
   "version": "0.1.21",
   "description": "Simple, powerful time and attendance tracking API.",
   "license": "MIT",
-  "homepage": "https://example.com",
+  "homepage": "https://trackingtime.co?utm_source=n8n&utm_medium=referral",
   "keywords": [
     "n8n-community-node-package"
   ],
   "author": {
-    "name": "Jose Flores",
-    "email": "jose@big.partners"
+    "name": "TrackingTime",
+    "email": "support@trackingtime.co"
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/TrackingTime/n8n-nodes-trackingtime.git"
   },
   "scripts": {
     "build": "n8n-node build",
@@ -33,6 +33,7 @@
       "dist/credentials/TrackingtimeApi.credentials.js"
     ],
     "nodes": [
+      "dist/nodes/Trackingtime/Trackingtime.node.js",
       "dist/nodes/Trackingtime/TrackingtimeTrigger.node.js"
     ]
   },

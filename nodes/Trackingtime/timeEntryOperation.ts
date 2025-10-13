@@ -1,13 +1,11 @@
 import type { INodeProperties } from 'n8n-workflow';
 
-// Define las operaciones principales para el recurso 'timeEntry'
 export const timeEntryOperations: INodeProperties[] = [
 	{
 		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
-		// Asume que el recurso principal se llama 'timeEntry'
 		displayOptions: {
 			show: {
 				resource: ['timeEntry'],
@@ -37,12 +35,29 @@ export const timeEntryOperations: INodeProperties[] = [
 	},
 ];
 
-// Define los campos para cada una de las operaciones de 'timeEntry'
 export const timeEntryFields: INodeProperties[] = [
 
 	/* -------------------------------------------------------------------------- */
 	/* timeEntry:add                              */
 	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Account Name or ID',
+		name: 'accountId',
+		type: 'options',
+		typeOptions: {
+			loadOptionsMethod: 'getAccounts',
+		},
+		required: true,
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['timeEntry'],
+				operation: ['add', 'search', 'update'],
+			},
+		},
+		description:
+			'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+	},
 	{
 		displayName: 'Fields',
 		name: 'fields',
@@ -55,15 +70,13 @@ export const timeEntryFields: INodeProperties[] = [
 			},
 		},
 		default: {},
-		// Fields are now sorted alphabetically by displayName
 		options: [
 			{
 				displayName: 'Duration',
 				name: 'duration',
 				type: 'string',
 				default: '',
-				// FIX: Capitalized the first letter of the description
-				description: 'E.g., 1h 30m, 90m, or 1.5',
+				description: 'Duraction in seconds',
 			},
 			{
 				displayName: 'End',
@@ -169,40 +182,35 @@ export const timeEntryFields: INodeProperties[] = [
 		],
 	},
 	{
-		displayName: 'Time Entry ID',
-		name: 'timeEntryId',
-		type: 'string',
-		default: '',
+		displayName: 'Search Fields',
+		name: 'searchFields',
+		type: 'resourceMapper',
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		noDataExpression: true,
 		required: true,
 		displayOptions: {
 			show: {
 				resource: ['timeEntry'],
 				operation: ['search'],
-				selectCriteria: ['ByID'],
 			},
 		},
-	},
-	{
-		displayName: 'Third Party Time Entry ID',
-		name: 'externalId',
-		type: 'string',
-		default: '',
-		required: true,
-		displayOptions: {
-			show: {
-				resource: ['timeEntry'],
-				operation: ['search'],
-				selectCriteria: ['ByExternalID'],
+			typeOptions: {
+				resourceMapper: {
+					resourceMapperMethod: 'getTimeEntrySearchFields',
+					mode: 'map',
+					valuesLabel: 'Filters',
+					allowEmptyValues: false,
+					supportAutoMap: false,
+				},
 			},
 		},
-	},
-	// ... y así sucesivamente para cada criterio de búsqueda.
-
 	/* -------------------------------------------------------------------------- */
 	/* timeEntry:update                              */
 	/* -------------------------------------------------------------------------- */
 	{
-		// FIX: Corrected casing from ID to Id
 		displayName: 'Time Entry ID',
 		name: 'event_id',
 		type: 'string',
@@ -228,15 +236,13 @@ export const timeEntryFields: INodeProperties[] = [
 			},
 		},
 		default: {},
-		// Fields are now sorted alphabetically by displayName
 		options: [
 			{
 				displayName: 'Duration',
 				name: 'duration',
 				type: 'string',
 				default: '',
-				// FIX: Capitalized the first letter of the description
-				description: 'E.g., 1h 30m, 90m, or 1.5',
+				description: 'Duraction in seconds',
 			},
 			{
 				displayName: 'End',
