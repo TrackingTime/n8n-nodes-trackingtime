@@ -4,7 +4,7 @@ import type {
 	IHookFunctions,
 	ILoadOptionsFunctions,
 	IHttpRequestMethods,
-	IRequestOptions,
+	IHttpRequestOptions,
 } from 'n8n-workflow';
 import { TRACKINGTIME_BASE_URL } from '../constants';
 
@@ -20,10 +20,10 @@ export async function trackingTimeApiRequest<T = IDataObject>(
 ): Promise<T> {
     const credentialType = 'trackingtimeApi';
 	
-    const options: IRequestOptions = {
+	const options: IHttpRequestOptions = {
 		method,
 		qs: query,
-		uri: uri || `${TRACKINGTIME_BASE_URL}/${resource}`,
+		url: uri ?? `${TRACKINGTIME_BASE_URL}/${resource}`,
 		body,
 		json: true,
 	};
@@ -38,7 +38,7 @@ export async function trackingTimeApiRequest<T = IDataObject>(
 		delete options.qs;
 	}
 
-	return (await this.helpers.requestWithAuthentication.call(this, credentialType, options)) as T;
+	return (await this.helpers.httpRequestWithAuthentication.call(this, credentialType, options)) as T;
 }
 
 const toSnakeCase = (value: string): string =>

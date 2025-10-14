@@ -10,7 +10,7 @@ import { parseTrackingTimeResponse } from '../utils';
 export async function getAccounts(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-	const rawResponse = (await this.helpers.requestWithAuthentication.call(
+	const rawResponse = (await this.helpers.httpRequestWithAuthentication.call(
 		this,
 		'trackingtimeApi',
 		{
