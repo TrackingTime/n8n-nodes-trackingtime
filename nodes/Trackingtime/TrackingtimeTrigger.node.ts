@@ -34,7 +34,7 @@ export class TrackingtimeTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'TrackingTime Trigger',
 		name: 'trackingtimeTrigger',
-		icon: 'file:TrackingTime.svg',
+		icon: 'file:trackingtime.svg',
 		group: ['trigger'],
 		version: 1,
 		subtitle: '={{$parameter["event"]}}',
@@ -143,7 +143,6 @@ export class TrackingtimeTrigger implements INodeType {
 					try {
 						await trackingTimeApiRequest.call(this, 'GET', endpoint, {});
 					} catch (e) {
-						Logger.error(e);
 						return false;
 					}
 					delete webhookData.webhookId;
@@ -154,7 +153,6 @@ export class TrackingtimeTrigger implements INodeType {
 	};
 
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
-		Logger.info('Webhook');
 		const req = this.getRequestObject();
 
 		return {

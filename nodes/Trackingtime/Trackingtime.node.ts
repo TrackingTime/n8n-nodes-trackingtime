@@ -27,7 +27,7 @@ export class Trackingtime implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'TrackingTime',
 		name: 'trackingtime',
-		icon: 'file:TrackingTime.svg',
+		icon: 'file:trackingtime.svg',
 		group: ['output'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
