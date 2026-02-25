@@ -6,7 +6,7 @@ import type {
 	IWebhookFunctions,
 	IWebhookResponseData,
 } from 'n8n-workflow';
-import { NodeConnectionTypes, LoggerProxy as Logger  } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { getAccounts } from './methods/loadOptions';
 import { trackingTimeApiRequest } from './methods/genericFunctions';
@@ -142,7 +142,7 @@ export class TrackingtimeTrigger implements INodeType {
 					const endpoint = `/${accountId}/webhooks/${webhookData.webhookId}/delete`;
 					try {
 						await trackingTimeApiRequest.call(this, 'GET', endpoint, {});
-					} catch (e) {
+					} catch {
 						return false;
 					}
 					delete webhookData.webhookId;
