@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-trackingtime",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Simple, powerful time and attendance tracking API.",
   "license": "MIT",
   "homepage": "https://trackingtime.co?utm_source=n8n&utm_medium=referral",
